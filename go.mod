@@ -1,4 +1,4 @@
-module github.com/adamjr36/auth
+module github.com/adamjr36/go-auth
 
 go 1.24.1
 
