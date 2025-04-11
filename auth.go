@@ -212,7 +212,7 @@ func (a *authenticator) generateTokens(userId string) (string, string, int64, er
 		return "", "", 0, ErrTokenGeneration
 	}
 
-	return tokenString, refreshTokenString, refreshExpiresAt.Unix(), nil
+	return tokenString, refreshTokenString, accessExpiresAt.Unix(), nil
 }
 
 // SignOut revokes a user's refresh token
