@@ -27,7 +27,7 @@ func NewWithConfig(secret string, store Store, config TokenConfig) Authenticator
 	}
 }
 
-// ValidateToken validates a JWT token and returns the user ID if valid
+// ValidateToken validates a JWT token and returns the ID if valid
 func (a *authenticator) ValidateToken(ctx context.Context, tokenString string) (string, error) {
 	// Parse the token with claims
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (any, error) {
@@ -47,18 +47,18 @@ func (a *authenticator) ValidateToken(ctx context.Context, tokenString string) (
 
 	// Validate claims
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
-		// Check if the claims have a non-empty UserID
-		if claims.UserID == "" {
+		// Check if the claims have a non-empty ID
+		if claims.ID == "" {
 			return "", ErrInvalidToken
 		}
-		return claims.UserID, nil
+		return claims.ID, nil
 	}
 
 	return "", ErrInvalidToken
 }
 
-// RefreshToken refreshes a JWT token using a valid refresh token
-// Returns the new JWT token, new refresh token, and the expiration time of the new refresh token
+// RefreshToken refreshes a JWT using a valid refresh token
+// Returns the new JWT, new refresh token, and the expiration time of the new JWT
 func (a *authenticator) RefreshToken(ctx context.Context, refreshToken string) (string, string, int64, error) {
 	// Parse the token to get the user ID
 	token, err := jwt.ParseWithClaims(refreshToken, &Claims{}, func(token *jwt.Token) (any, error) {
@@ -95,14 +95,14 @@ func (a *authenticator) RefreshToken(ctx context.Context, refreshToken string) (
 	}
 
 	// Generate new tokens
-	jwt, newRefreshToken, expiresAt, err := a.generateTokens(claims.UserID)
+	jwt, newRefreshToken, expiresAt, err := a.generateTokens(claims.ID)
 	if err != nil {
 		fmt.Println("Error generating tokens:", err)
 		return "", "", 0, err
 	}
 
 	// Store the new refresh token
-	if err := a.store.SetRefreshToken(ctx, claims.UserID, newRefreshToken); err != nil {
+	if err := a.store.SetRefreshToken(ctx, claims.ID, newRefreshToken); err != nil {
 		fmt.Println("Error setting refresh token:", err)
 		return "", "", 0, err
 	}
@@ -139,7 +139,7 @@ func (a *authenticator) SignUp(ctx context.Context, key string, password string)
 // SignIn authenticates a user and returns tokens if successful
 func (a *authenticator) SignIn(ctx context.Context, key string, password string) (string, string, string, int64, error) {
 	// Get user auth info from the store
-	userId, hashedPassword, err := a.store.GetUserAuth(ctx, key)
+	id, hashedPassword, err := a.store.GetUserAuth(ctx, key)
 	if err != nil {
 		return "", "", "", 0, ErrInvalidCredentials
 	}
@@ -151,22 +151,22 @@ func (a *authenticator) SignIn(ctx context.Context, key string, password string)
 	}
 
 	// Generate tokens
-	jwt, refreshToken, expiresAt, err := a.generateTokens(userId)
+	jwt, refreshToken, expiresAt, err := a.generateTokens(id)
 	if err != nil {
 		return "", "", "", 0, err
 	}
 
 	// Store the refresh token - note: we're not checking for existing tokens
 	// This allows for multiple active sessions
-	if err := a.store.SetRefreshToken(ctx, userId, refreshToken); err != nil {
+	if err := a.store.SetRefreshToken(ctx, id, refreshToken); err != nil {
 		return "", "", "", 0, err
 	}
 
-	return userId, jwt, refreshToken, expiresAt, nil
+	return id, jwt, refreshToken, expiresAt, nil
 }
 
 // generateTokens creates a new JWT and refresh token pair, and returns the JWT, refresh token, and expiration time
-func (a *authenticator) generateTokens(userId string) (string, string, int64, error) {
+func (a *authenticator) generateTokens(id string) (string, string, int64, error) {
 	// Use current time with nanoseconds to ensure uniqueness
 	now := time.Now()
 	nonce := now.UnixNano()
@@ -174,14 +174,14 @@ func (a *authenticator) generateTokens(userId string) (string, string, int64, er
 	accessExpiresAt := now.Add(a.config.AccessTokenExpiry)
 	// Create access token with nonce to ensure uniqueness
 	accessClaims := Claims{
-		UserID: userId,
+		ID: id,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(accessExpiresAt),
 			IssuedAt:  jwt.NewNumericDate(now),
 			NotBefore: jwt.NewNumericDate(now),
 			Issuer:    a.config.Issuer,
-			Subject:   userId,
-			ID:        fmt.Sprintf("%s-%d", userId, nonce), // Add unique ID to ensure tokens are different
+			Subject:   id,
+			ID:        fmt.Sprintf("%s-%d", id, nonce), // Add unique ID to ensure tokens are different
 		},
 	}
 
@@ -195,14 +195,14 @@ func (a *authenticator) generateTokens(userId string) (string, string, int64, er
 	// Create refresh token with longer expiry
 	refreshExpiresAt := now.Add(a.config.RefreshTokenExpiry)
 	refreshClaims := Claims{
-		UserID: userId,
+		ID: id,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(refreshExpiresAt),
 			IssuedAt:  jwt.NewNumericDate(now),
 			NotBefore: jwt.NewNumericDate(now),
 			Issuer:    a.config.Issuer,
-			Subject:   userId,
-			ID:        fmt.Sprintf("%s-%d-refresh", userId, nonce), // Add unique ID to ensure tokens are different
+			Subject:   id,
+			ID:        fmt.Sprintf("%s-%d-refresh", id, nonce), // Add unique ID to ensure tokens are different
 		},
 	}
 

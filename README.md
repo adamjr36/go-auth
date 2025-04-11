@@ -15,6 +15,23 @@ Authenticator and Store interfaces defined in types.go.
 - Modular design with clean interfaces
 - Some customization with token expiries configurable
 
+## Key and ID
+
+### Key
+
+The key is meant to symbolize a username, email, or user id with which users sign up: username + password. auth makes no assumptions as to what it is, but the Store implementation should know what to do with it.
+
+### ID
+
+The ID is what is stored in the claims of the tokens. It can be the Key mentioned above, it could be a separate unique identifier for users, or it could be something else like a session ID. 
+
+In the Store implementation of GetUserAuth, 
+if ID is a uuid unique to a user:
+    - Store should return the user's uuid and hashedPassword
+if ID is a uuid session id
+    - Store should return a NEW session id and hashedPassword
+    - Store MAY create an entry in the implied sessions table with NO refresh token, or may opt to do that in auth's subsequent call to SetRefreshToken
+    
 ## Usage
 
 ### Initialize the Authenticator
@@ -43,7 +60,7 @@ authenticator := auth.NewWithConfig(secret, store, config)
 
 ```go
 // Sign up a new user
-userId, err := authenticator.SignUp("user@example.com", "password123")
+id, err := authenticator.SignUp("user@example.com", "password123")
 if err != nil {
     // Handle error
 }
@@ -53,7 +70,7 @@ if err != nil {
 
 ```go
 // Sign in a user
-userId, jwtToken, refreshToken, err := authenticator.SignIn("user@example.com", "password123")
+id, jwtToken, refreshToken, err := authenticator.SignIn("user@example.com", "password123")
 if err != nil {
     // Handle error
 }
@@ -65,7 +82,7 @@ if err != nil {
 
 ```go
 // Validate a JWT token
-userId, err := authenticator.ValidateToken(jwtToken)
+id, err := authenticator.ValidateToken(jwtToken)
 if err != nil {
     // Handle token error
     if errors.Is(err, auth.ErrExpiredToken) {

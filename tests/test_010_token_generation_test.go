@@ -54,8 +54,8 @@ func TestGenerateTokensErrorHandling(t *testing.T) {
 	}
 
 	// Verify the claims
-	if claims["userId"] != userID {
-		t.Errorf("Expected userID %s, got %v", userID, claims["userId"])
+	if claims["id"] != userID {
+		t.Errorf("Expected userID %s, got %v", userID, claims["id"])
 	}
 
 	if claims["iss"] != auth.DefaultTokenConfig().Issuer {
@@ -76,8 +76,8 @@ func TestGenerateTokensErrorHandling(t *testing.T) {
 	}
 
 	// Verify refresh token claims
-	if refreshClaims["userId"] != userID {
-		t.Errorf("Expected userID %s, got %v", userID, refreshClaims["userId"])
+	if refreshClaims["id"] != userID {
+		t.Errorf("Expected userID %s, got %v", userID, refreshClaims["id"])
 	}
 
 	if refreshClaims["iss"] != auth.DefaultTokenConfig().Issuer {

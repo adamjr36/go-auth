@@ -3,6 +3,7 @@ package tests
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 
 // MockStore implements the auth.Store interface for testing
 type MockStore struct {
+	mutex         sync.Mutex
 	users         map[string]string              // key -> hashedPassword
 	userIDs       map[string]string              // key -> userID
 	refreshTokens map[string]string              // refreshToken -> refreshToken
@@ -27,6 +29,9 @@ func NewMockStore() *MockStore {
 }
 
 func (m *MockStore) CreateUser(ctx context.Context, key string, password string) (string, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	if _, exists := m.users[key]; exists {
 		return "", errors.New("user already exists")
 	}
@@ -39,6 +44,9 @@ func (m *MockStore) CreateUser(ctx context.Context, key string, password string)
 }
 
 func (m *MockStore) GetUserAuth(ctx context.Context, key string) (string, string, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	password, exists := m.users[key]
 	if !exists {
 		return "", "", errors.New("user not found")
@@ -50,6 +58,9 @@ func (m *MockStore) GetUserAuth(ctx context.Context, key string) (string, string
 }
 
 func (m *MockStore) GetRefreshToken(ctx context.Context, refreshToken string) (string, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	token, exists := m.refreshTokens[refreshToken]
 	if !exists {
 		return "", errors.New("refresh token not found")
@@ -59,6 +70,9 @@ func (m *MockStore) GetRefreshToken(ctx context.Context, refreshToken string) (s
 }
 
 func (m *MockStore) SetRefreshToken(ctx context.Context, userID string, refreshToken string) error {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	m.refreshTokens[refreshToken] = refreshToken
 
 	// Store multiple tokens per user
@@ -71,6 +85,9 @@ func (m *MockStore) SetRefreshToken(ctx context.Context, userID string, refreshT
 }
 
 func (m *MockStore) RevokeRefreshToken(ctx context.Context, refreshToken string) error {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	delete(m.refreshTokens, refreshToken)
 
 	// Also remove from user tokens map
@@ -84,6 +101,9 @@ func (m *MockStore) RevokeRefreshToken(ctx context.Context, refreshToken string)
 }
 
 func (m *MockStore) RevokeAllRefreshTokens(ctx context.Context, userID string) error {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	// Find and delete all tokens for this user
 	if tokens, exists := m.userTokens[userID]; exists {
 		for token := range tokens {
@@ -96,6 +116,9 @@ func (m *MockStore) RevokeAllRefreshTokens(ctx context.Context, userID string) e
 }
 
 func (m *MockStore) DeleteUser(ctx context.Context, userID string) error {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	// Find the key for this userID
 	var keyToDelete string
 	for key, id := range m.userIDs {
@@ -111,7 +134,14 @@ func (m *MockStore) DeleteUser(ctx context.Context, userID string) error {
 	}
 
 	// Also revoke all tokens
-	return m.RevokeAllRefreshTokens(ctx, userID)
+	if tokens, exists := m.userTokens[userID]; exists {
+		for token := range tokens {
+			delete(m.refreshTokens, token)
+		}
+		delete(m.userTokens, userID)
+	}
+
+	return nil
 }
 
 // TestInitialization tests the initialization of the auth module
