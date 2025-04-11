@@ -27,11 +27,14 @@ The ID is what is stored in the claims of the tokens. It can be the Key mentione
 
 In the Store implementation of GetUserAuth, 
 if ID is a uuid unique to a user:
+
     - Store should return the user's uuid and hashedPassword
+
 if ID is a uuid session id
+
     - Store should return a NEW session id and hashedPassword
     - Store MAY create an entry in the implied sessions table with NO refresh token, or may opt to do that in auth's subsequent call to SetRefreshToken
-    
+
 ## Usage
 
 ### Initialize the Authenticator
