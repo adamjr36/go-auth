@@ -4,6 +4,8 @@ A secure JWT-based authentication and authorization package for Go applications.
 
 Note: Tests and Documentation mostly written with AI. Well tested with these tests and others, as well as in a larger API application.
 
+Authenticator and Store interfaces defined in types.go.
+
 ## Features
 
 - Secure JWT token generation and validation
@@ -98,6 +100,11 @@ The package implements token issuing and validation following JWT best practices
 - HMAC SHA-256 for token signing
 - Standard JWT claims including expiration, issuing time, and issuer
 - Token refresh with rotation and validation
+
+## TODO (theoretically)
+1. Make the config struct a lot bigger to allow for a lot more customization
+2. Similar to above but allow for smaller Store interface? Maybe someone doesn't want to delete users... and sign out, sign out all, and delete users are all just direct wrappers around the store anyway... idk.
+3. Make better documenation esp for go doc or godoc
 
 ## License
 
