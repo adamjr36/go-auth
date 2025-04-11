@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adamjr36/auth"
+	"github.com/adamjr36/go-auth"
 )
 
 // TestTokenValidation tests the validation of JWT tokens

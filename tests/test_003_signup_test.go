@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/adamjr36/auth"
+	"github.com/adamjr36/go-auth"
 )
 
 // TestSignUp tests the sign-up functionality

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adamjr36/auth"
+	"github.com/adamjr36/go-auth"
 )
 
 // ErroringStore implements the auth.Store interface but returns errors for testing

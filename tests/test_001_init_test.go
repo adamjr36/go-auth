@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adamjr36/auth"
+	"github.com/adamjr36/go-auth"
 )
 
 // MockStore implements the auth.Store interface for testing

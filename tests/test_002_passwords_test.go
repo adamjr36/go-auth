@@ -3,7 +3,7 @@ package tests
 import (
 	"testing"
 
-	"github.com/adamjr36/auth"
+	"github.com/adamjr36/go-auth"
 )
 
 // TestPasswordHashing tests the password hashing functionality

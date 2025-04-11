@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adamjr36/auth"
+	"github.com/adamjr36/go-auth"
 )
 
 // TestTokenRefresh tests refreshing a token

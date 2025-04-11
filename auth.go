@@ -2,8 +2,6 @@ package auth
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"time"
@@ -32,7 +30,7 @@ func NewWithConfig(secret string, store Store, config TokenConfig) Authenticator
 // ValidateToken validates a JWT token and returns the user ID if valid
 func (a *authenticator) ValidateToken(ctx context.Context, tokenString string) (string, error) {
 	// Parse the token with claims
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (any, error) {
 		// Verify the signing algorithm
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ErrInvalidToken
@@ -60,9 +58,10 @@ func (a *authenticator) ValidateToken(ctx context.Context, tokenString string) (
 }
 
 // RefreshToken refreshes a JWT token using a valid refresh token
+// Returns the new JWT token, new refresh token, and the expiration time of the new refresh token
 func (a *authenticator) RefreshToken(ctx context.Context, refreshToken string) (string, string, int64, error) {
 	// Parse the token to get the user ID
-	token, err := jwt.ParseWithClaims(refreshToken, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(refreshToken, &Claims{}, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ErrInvalidToken
 		}
@@ -105,6 +104,7 @@ func (a *authenticator) RefreshToken(ctx context.Context, refreshToken string) (
 }
 
 // SignUp creates a new user with the given key and password
+// Key can be anything, like an email address, username, etc.
 func (a *authenticator) SignUp(ctx context.Context, key string, password string) (string, error) {
 	// Hash the password before storing
 	hashedPassword, err := HashPassword(password)
@@ -192,25 +192,29 @@ func (a *authenticator) generateTokens(userId string) (string, string, int64, er
 	return tokenString, refreshTokenString, expiresAt.Unix(), nil
 }
 
-// GenerateSecureToken generates a secure random token for refresh tokens
-func GenerateSecureToken(length int) (string, error) {
-	bytes := make([]byte, length)
-	if _, err := rand.Read(bytes); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(bytes), nil
-}
+// // GenerateSecureToken generates a secure random token for refresh tokens
+// func GenerateSecureToken(length int) (string, error) {
+// 	bytes := make([]byte, length)
+// 	if _, err := rand.Read(bytes); err != nil {
+// 		return "", err
+// 	}
+// 	return hex.EncodeToString(bytes), nil
+// }
 
 // SignOut revokes a user's refresh token
+// Does not do anything except call the store's RevokeRefreshToken method
 func (a *authenticator) SignOut(ctx context.Context, refreshToken string) error {
 	return a.store.RevokeRefreshToken(ctx, refreshToken)
 }
 
+// SignOutAll revokes all refresh tokens for a user
+// Does not do anything except call the store's RevokeAllRefreshTokens method
 func (a *authenticator) SignOutAll(ctx context.Context, userId string) error {
 	return a.store.RevokeAllRefreshTokens(ctx, userId)
 }
 
 // DeleteUser deletes a user from the store
+// Does not do anything except call the store's DeleteUser method
 func (a *authenticator) DeleteUser(ctx context.Context, userId string) error {
 	return a.store.DeleteUser(ctx, userId)
 }

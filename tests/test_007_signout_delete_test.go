@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/adamjr36/auth"
+	"github.com/adamjr36/go-auth"
 )
 
 // TestSignOut tests the sign-out functionality
