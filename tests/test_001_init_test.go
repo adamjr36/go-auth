@@ -11,10 +11,10 @@ import (
 
 // MockStore implements the auth.Store interface for testing
 type MockStore struct {
-	users         map[string]string // key -> hashedPassword
-	userIDs       map[string]string // key -> userID
-	refreshTokens map[string]string // refreshToken -> refreshToken
-	userTokens    map[string]string // userID -> refreshToken
+	users         map[string]string              // key -> hashedPassword
+	userIDs       map[string]string              // key -> userID
+	refreshTokens map[string]string              // refreshToken -> refreshToken
+	userTokens    map[string]map[string]struct{} // userID -> set of refresh tokens
 }
 
 func NewMockStore() *MockStore {
@@ -22,7 +22,7 @@ func NewMockStore() *MockStore {
 		users:         make(map[string]string),
 		userIDs:       make(map[string]string),
 		refreshTokens: make(map[string]string),
-		userTokens:    make(map[string]string),
+		userTokens:    make(map[string]map[string]struct{}),
 	}
 }
 
@@ -60,7 +60,12 @@ func (m *MockStore) GetRefreshToken(ctx context.Context, refreshToken string) (s
 
 func (m *MockStore) SetRefreshToken(ctx context.Context, userID string, refreshToken string) error {
 	m.refreshTokens[refreshToken] = refreshToken
-	m.userTokens[userID] = refreshToken
+
+	// Store multiple tokens per user
+	if _, exists := m.userTokens[userID]; !exists {
+		m.userTokens[userID] = make(map[string]struct{})
+	}
+	m.userTokens[userID][refreshToken] = struct{}{}
 
 	return nil
 }
@@ -68,13 +73,22 @@ func (m *MockStore) SetRefreshToken(ctx context.Context, userID string, refreshT
 func (m *MockStore) RevokeRefreshToken(ctx context.Context, refreshToken string) error {
 	delete(m.refreshTokens, refreshToken)
 
+	// Also remove from user tokens map
+	for userID, tokens := range m.userTokens {
+		if _, exists := tokens[refreshToken]; exists {
+			delete(m.userTokens[userID], refreshToken)
+		}
+	}
+
 	return nil
 }
 
 func (m *MockStore) RevokeAllRefreshTokens(ctx context.Context, userID string) error {
 	// Find and delete all tokens for this user
-	if token, exists := m.userTokens[userID]; exists {
-		delete(m.refreshTokens, token)
+	if tokens, exists := m.userTokens[userID]; exists {
+		for token := range tokens {
+			delete(m.refreshTokens, token)
+		}
 		delete(m.userTokens, userID)
 	}
 

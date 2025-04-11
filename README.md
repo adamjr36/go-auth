@@ -1,6 +1,6 @@
 # Auth Package
 
-A secure JWT-based authentication and authorization package for Go applications.
+A secure JWT-based authentication and authorization package for Go applications. This package is a wrapper around jwt and bcrypt for standard authentication boilerplate for a typical backend API. The authenticator interface can easily be used to verify jwt in middleware, as well as handle the heavy lifting in signup, signin, ... authentication routes (provided with a store interface by the user.)
 
 Note: Tests and Documentation mostly written with AI. Well tested with these tests and others, as well as in a larger API application.
 

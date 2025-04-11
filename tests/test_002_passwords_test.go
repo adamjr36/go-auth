@@ -69,15 +69,22 @@ func TestPasswordEdgeCases(t *testing.T) {
 		t.Errorf("Password comparison failed for empty password: %v", err)
 	}
 
-	// Test very long password (should still work)
+	// Test very long password (should fail due to bcrypt limitation)
 	longPassword := "this-is-a-very-long-password-that-exceeds-typical-input-limits-but-should-still-be-hashable-and-comparable-in-the-system-with-no-issues"
-	hashedLong, err := auth.HashPassword(longPassword)
-	if err != nil {
-		t.Errorf("Failed to hash long password: %v", err)
+	_, err = auth.HashPassword(longPassword)
+	if err == nil {
+		t.Errorf("Hashing long password should fail due to bcrypt limitations")
 	}
 
-	err = auth.ComparePasswords(hashedLong, longPassword)
+	// Test acceptable length password (just under the limit)
+	acceptablePassword := "short-password-okay"
+	hashedAcceptable, err := auth.HashPassword(acceptablePassword)
 	if err != nil {
-		t.Errorf("Password comparison failed for long password: %v", err)
+		t.Errorf("Failed to hash acceptable length password: %v", err)
+	}
+
+	err = auth.ComparePasswords(hashedAcceptable, acceptablePassword)
+	if err != nil {
+		t.Errorf("Password comparison failed for acceptable length password: %v", err)
 	}
 }

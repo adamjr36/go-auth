@@ -87,6 +87,13 @@ func (a *authenticator) RefreshToken(ctx context.Context, refreshToken string) (
 		return "", "", 0, ErrRefreshToken
 	}
 
+	// Immediately revoke the old refresh token to prevent race conditions
+	// This should cause concurrent refreshes to fail as expected
+	if err := a.store.RevokeRefreshToken(ctx, refreshToken); err != nil {
+		fmt.Println("Error revoking old refresh token:", err)
+		return "", "", 0, err
+	}
+
 	// Generate new tokens
 	jwt, newRefreshToken, expiresAt, err := a.generateTokens(claims.UserID)
 	if err != nil {
@@ -106,6 +113,14 @@ func (a *authenticator) RefreshToken(ctx context.Context, refreshToken string) (
 // SignUp creates a new user with the given key and password
 // Key can be anything, like an email address, username, etc.
 func (a *authenticator) SignUp(ctx context.Context, key string, password string) (string, error) {
+	// Validate inputs
+	if key == "" {
+		return "", errors.New("key cannot be empty")
+	}
+	if password == "" {
+		return "", errors.New("password cannot be empty")
+	}
+
 	// Hash the password before storing
 	hashedPassword, err := HashPassword(password)
 	if err != nil {
@@ -141,7 +156,8 @@ func (a *authenticator) SignIn(ctx context.Context, key string, password string)
 		return "", "", "", 0, err
 	}
 
-	// Store the refresh token
+	// Store the refresh token - note: we're not checking for existing tokens
+	// This allows for multiple active sessions
 	if err := a.store.SetRefreshToken(ctx, userId, refreshToken); err != nil {
 		return "", "", "", 0, err
 	}
@@ -151,16 +167,21 @@ func (a *authenticator) SignIn(ctx context.Context, key string, password string)
 
 // generateTokens creates a new JWT and refresh token pair, and returns the JWT, refresh token, and expiration time
 func (a *authenticator) generateTokens(userId string) (string, string, int64, error) {
-	expiresAt := time.Now().Add(a.config.AccessTokenExpiry)
-	// Create access token
+	// Use current time with nanoseconds to ensure uniqueness
+	now := time.Now()
+	nonce := now.UnixNano()
+
+	accessExpiresAt := now.Add(a.config.AccessTokenExpiry)
+	// Create access token with nonce to ensure uniqueness
 	accessClaims := Claims{
 		UserID: userId,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expiresAt),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			NotBefore: jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(accessExpiresAt),
+			IssuedAt:  jwt.NewNumericDate(now),
+			NotBefore: jwt.NewNumericDate(now),
 			Issuer:    a.config.Issuer,
 			Subject:   userId,
+			ID:        fmt.Sprintf("%s-%d", userId, nonce), // Add unique ID to ensure tokens are different
 		},
 	}
 
@@ -172,14 +193,16 @@ func (a *authenticator) generateTokens(userId string) (string, string, int64, er
 	}
 
 	// Create refresh token with longer expiry
+	refreshExpiresAt := now.Add(a.config.RefreshTokenExpiry)
 	refreshClaims := Claims{
 		UserID: userId,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(a.config.RefreshTokenExpiry)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			NotBefore: jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(refreshExpiresAt),
+			IssuedAt:  jwt.NewNumericDate(now),
+			NotBefore: jwt.NewNumericDate(now),
 			Issuer:    a.config.Issuer,
 			Subject:   userId,
+			ID:        fmt.Sprintf("%s-%d-refresh", userId, nonce), // Add unique ID to ensure tokens are different
 		},
 	}
 
@@ -189,17 +212,8 @@ func (a *authenticator) generateTokens(userId string) (string, string, int64, er
 		return "", "", 0, ErrTokenGeneration
 	}
 
-	return tokenString, refreshTokenString, expiresAt.Unix(), nil
+	return tokenString, refreshTokenString, refreshExpiresAt.Unix(), nil
 }
-
-// // GenerateSecureToken generates a secure random token for refresh tokens
-// func GenerateSecureToken(length int) (string, error) {
-// 	bytes := make([]byte, length)
-// 	if _, err := rand.Read(bytes); err != nil {
-// 		return "", err
-// 	}
-// 	return hex.EncodeToString(bytes), nil
-// }
 
 // SignOut revokes a user's refresh token
 // Does not do anything except call the store's RevokeRefreshToken method

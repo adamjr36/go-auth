@@ -38,23 +38,7 @@ make cover
 
 # Run tests and generate an HTML coverage report
 make cover-html
-
-# Run tests with race detection
-make race
-
-# Run benchmarks
-make benchmark
 ```
-
-### Running Specific Tests
-
-To run tests matching a specific pattern:
-
-```bash
-make test-pattern PATTERN="TestSignIn"
-```
-
-Replace `TestSignIn` with any test name or pattern you want to match.
 
 ### Cleaning Up
 

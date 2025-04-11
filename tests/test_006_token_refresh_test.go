@@ -33,14 +33,18 @@ func TestTokenRefresh(t *testing.T) {
 		t.Fatalf("Failed to sign in: %v", err)
 	}
 
+	t.Logf("Original expires at: %d", expiresAt)
+
 	// Wait a bit to ensure the new token will have a different timestamp
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 
 	// Refresh the token
 	newJwt, newRefreshToken, newExpiresAt, err := authenticator.RefreshToken(ctx, refreshToken)
 	if err != nil {
 		t.Errorf("Failed to refresh token: %v", err)
 	}
+
+	t.Logf("New expires at: %d, difference: %d", newExpiresAt, newExpiresAt-expiresAt)
 
 	// Verify we got new tokens
 	if newJwt == jwt {

@@ -6,7 +6,7 @@ all: test
 # Run tests without verbose output
 test:
 	@echo "Running tests..."
-	@go test -count=1 ./tests -coverprofile=coverage.out
+	@go test -count=1 ./tests -coverprofile=coverage.out -coverpkg=./...
 	@echo "Test summary:"
 	@go tool cover -func=coverage.out | grep total | awk '{print "Coverage: " $$3}'
 	@echo "Tests completed"
@@ -14,7 +14,7 @@ test:
 # Run tests with verbose output
 test-verbose:
 	@echo "Running tests with verbose output..."
-	@go test -v -count=1 ./tests -coverprofile=coverage.out
+	@go test -v -count=1 ./tests -coverprofile=coverage.out -coverpkg=./...
 	@echo "Test summary:"
 	@go tool cover -func=coverage.out | grep total | awk '{print "Coverage: " $$3}'
 	@echo "Tests completed"
@@ -22,14 +22,14 @@ test-verbose:
 # Generate coverage report
 cover:
 	@echo "Generating coverage report..."
-	@go test -count=1 ./tests -coverprofile=coverage.out
+	@go test -count=1 ./tests -coverprofile=coverage.out -coverpkg=./...
 	@go tool cover -func=coverage.out
 	@echo "Coverage report generated"
 
 # Generate HTML coverage report and open it
 cover-html:
 	@echo "Generating HTML coverage report..."
-	@go test -count=1 ./tests -coverprofile=coverage.out
+	@go test -count=1 ./tests -coverprofile=coverage.out -coverpkg=./...
 	@go tool cover -html=coverage.out -o coverage.html
 	@echo "HTML coverage report generated: coverage.html"
 	@if [ "$(shell uname)" = "Darwin" ]; then open coverage.html; fi
