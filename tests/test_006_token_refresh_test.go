@@ -60,13 +60,13 @@ func TestTokenRefresh(t *testing.T) {
 	}
 
 	// Verify the old refresh token is no longer valid
-	_, err = store.GetRefreshToken(ctx, refreshToken)
+	_, err = store.ValidateRefreshToken(ctx, refreshToken)
 	if err == nil {
 		t.Errorf("Old refresh token should no longer be valid")
 	}
 
 	// Verify the new refresh token is valid
-	storedToken, err := store.GetRefreshToken(ctx, newRefreshToken)
+	storedToken, err := store.ValidateRefreshToken(ctx, newRefreshToken)
 	if err != nil {
 		t.Errorf("Failed to get new refresh token from store: %v", err)
 	}

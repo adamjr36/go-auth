@@ -40,11 +40,11 @@ func (s *ErroringStore) GetUserAuth(ctx context.Context, key string) (string, st
 	return s.MockStore.GetUserAuth(ctx, key)
 }
 
-func (s *ErroringStore) GetRefreshToken(ctx context.Context, refreshToken string) (string, error) {
+func (s *ErroringStore) ValidateRefreshToken(ctx context.Context, refreshToken string) (string, error) {
 	if s.shouldError {
-		return "", errors.New("simulated error in GetRefreshToken")
+		return "", errors.New("simulated error in ValidateRefreshToken")
 	}
-	return s.MockStore.GetRefreshToken(ctx, refreshToken)
+	return s.MockStore.ValidateRefreshToken(ctx, refreshToken)
 }
 
 func (s *ErroringStore) SetRefreshToken(ctx context.Context, userID string, refreshToken string) error {
@@ -116,7 +116,7 @@ func TestStorageErrors(t *testing.T) {
 	store.SetError(true)
 	_, _, _, err = authenticator.RefreshToken(ctx, refreshToken)
 	if err == nil {
-		t.Errorf("Token refresh should fail when store.GetRefreshToken fails")
+		t.Errorf("Token refresh should fail when store.ValidateRefreshToken fails")
 	}
 
 	// Test sign-out failure

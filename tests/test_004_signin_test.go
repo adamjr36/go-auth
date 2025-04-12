@@ -50,7 +50,7 @@ func TestSignIn(t *testing.T) {
 	}
 
 	// Verify the refresh token is stored
-	storedToken, err := store.GetRefreshToken(ctx, refreshToken)
+	storedToken, err := store.ValidateRefreshToken(ctx, refreshToken)
 	if err != nil {
 		t.Errorf("Failed to get refresh token from store: %v", err)
 	}
@@ -138,12 +138,12 @@ func TestMultipleSignIns(t *testing.T) {
 	}
 
 	// Both tokens should be valid in the store
-	_, err = store.GetRefreshToken(ctx, refreshToken1)
+	_, err = store.ValidateRefreshToken(ctx, refreshToken1)
 	if err != nil {
 		t.Errorf("First refresh token should be valid: %v", err)
 	}
 
-	_, err = store.GetRefreshToken(ctx, refreshToken2)
+	_, err = store.ValidateRefreshToken(ctx, refreshToken2)
 	if err != nil {
 		t.Errorf("Second refresh token should be valid: %v", err)
 	}

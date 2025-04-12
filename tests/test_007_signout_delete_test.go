@@ -45,7 +45,7 @@ func TestSignOut(t *testing.T) {
 	}
 
 	// Verify the refresh token is no longer valid
-	_, err = store.GetRefreshToken(ctx, refreshToken)
+	_, err = store.ValidateRefreshToken(ctx, refreshToken)
 	if err == nil {
 		t.Errorf("Refresh token should not be valid after sign-out")
 	}
@@ -100,12 +100,12 @@ func TestSignOutAll(t *testing.T) {
 	}
 
 	// Verify both refresh tokens are no longer valid
-	_, err = store.GetRefreshToken(ctx, refreshToken1)
+	_, err = store.ValidateRefreshToken(ctx, refreshToken1)
 	if err == nil {
 		t.Errorf("First refresh token should not be valid after sign-out all")
 	}
 
-	_, err = store.GetRefreshToken(ctx, refreshToken2)
+	_, err = store.ValidateRefreshToken(ctx, refreshToken2)
 	if err == nil {
 		t.Errorf("Second refresh token should not be valid after sign-out all")
 	}
@@ -149,7 +149,7 @@ func TestDeleteUser(t *testing.T) {
 	}
 
 	// Verify the refresh token is no longer valid
-	_, err = store.GetRefreshToken(ctx, refreshToken)
+	_, err = store.ValidateRefreshToken(ctx, refreshToken)
 	if err == nil {
 		t.Errorf("Refresh token should not be valid after user deletion")
 	}

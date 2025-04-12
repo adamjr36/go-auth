@@ -137,7 +137,7 @@ func TestSessionStoreRevocation(t *testing.T) {
 	}
 
 	// Verify the session is revoked
-	_, err = store.GetRefreshToken(context.Background(), refreshToken)
+	_, err = store.ValidateRefreshToken(context.Background(), refreshToken)
 	if err == nil {
 		t.Error("Expected error when getting revoked refresh token")
 	}

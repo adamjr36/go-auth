@@ -57,7 +57,7 @@ func (m *MockStore) GetUserAuth(ctx context.Context, key string) (string, string
 	return userID, password, nil
 }
 
-func (m *MockStore) GetRefreshToken(ctx context.Context, refreshToken string) (string, error) {
+func (m *MockStore) ValidateRefreshToken(ctx context.Context, refreshToken string) (string, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 

@@ -81,7 +81,7 @@ func (a *authenticator) RefreshToken(ctx context.Context, refreshToken string) (
 	}
 
 	// Get stored refresh token to verify it hasn't been revoked
-	storedRefreshToken, err := a.store.GetRefreshToken(ctx, refreshToken)
+	storedRefreshToken, err := a.store.ValidateRefreshToken(ctx, refreshToken)
 	if err != nil || storedRefreshToken != refreshToken {
 		fmt.Println("Invalid stored refresh token")
 		return "", "", 0, ErrRefreshToken

@@ -64,9 +64,9 @@ type Store interface {
 	//      where the store can then create a record with that session id and refresh token.
 	GetUserAuth(ctx context.Context, key string) (id string, hashedPassword string, err error) // sign in
 
-	// GetRefreshToken returns the stored refresh token for a given refresh token from the store
+	// ValidateRefreshToken returns the stored refresh token for a given refresh token from the store
 	// Really just a dummy function to confirm that the refresh token is stored in the store
-	GetRefreshToken(ctx context.Context, refreshToken string) (storedRefreshToken string, err error) // for refresh token validation
+	ValidateRefreshToken(ctx context.Context, refreshToken string) (storedRefreshToken string, err error) // for refresh token validation
 
 	// SetRefreshToken stores the refresh token for a given id in the store
 	// Up to the user to overwrite previous refresh tokens for the user or not

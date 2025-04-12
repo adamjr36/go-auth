@@ -54,7 +54,7 @@ func (s *SessionStore) GetUserAuth(ctx context.Context, key string) (string, str
 	return sessionID, hashedPassword, nil
 }
 
-func (s *SessionStore) GetRefreshToken(ctx context.Context, refreshToken string) (string, error) {
+func (s *SessionStore) ValidateRefreshToken(ctx context.Context, refreshToken string) (string, error) {
 	for _, session := range s.sessions {
 		if session.RefreshToken == refreshToken && !session.IsRevoked {
 			return refreshToken, nil

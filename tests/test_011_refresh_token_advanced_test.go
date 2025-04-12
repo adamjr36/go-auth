@@ -13,9 +13,9 @@ import (
 // MockErrorStore implements auth.Store but returns errors for specific operations to test error handling
 type MockErrorStore struct {
 	*MockStore
-	shouldFailGetRefreshToken    bool
-	shouldFailRevokeRefreshToken bool
-	shouldFailSetRefreshToken    bool
+	shouldFailValidateRefreshToken bool
+	shouldFailRevokeRefreshToken   bool
+	shouldFailSetRefreshToken      bool
 }
 
 func NewMockErrorStore() *MockErrorStore {
@@ -26,11 +26,11 @@ func NewMockErrorStore() *MockErrorStore {
 
 // Override necessary methods to inject errors
 
-func (m *MockErrorStore) GetRefreshToken(ctx context.Context, refreshToken string) (string, error) {
-	if m.shouldFailGetRefreshToken {
-		return "", errors.New("mock GetRefreshToken error")
+func (m *MockErrorStore) ValidateRefreshToken(ctx context.Context, refreshToken string) (string, error) {
+	if m.shouldFailValidateRefreshToken {
+		return "", errors.New("mock ValidateRefreshToken error")
 	}
-	return m.MockStore.GetRefreshToken(ctx, refreshToken)
+	return m.MockStore.ValidateRefreshToken(ctx, refreshToken)
 }
 
 func (m *MockErrorStore) RevokeRefreshToken(ctx context.Context, refreshToken string) error {
@@ -47,8 +47,8 @@ func (m *MockErrorStore) SetRefreshToken(ctx context.Context, userID string, ref
 	return m.MockStore.SetRefreshToken(ctx, userID, refreshToken)
 }
 
-// TestRefreshTokenGetError tests error handling when GetRefreshToken fails
-func TestRefreshTokenGetError(t *testing.T) {
+// TestRefreshTokenValidateError tests error handling when ValidateRefreshToken fails
+func TestRefreshTokenValidateError(t *testing.T) {
 	// Create a mock error store
 	store := NewMockErrorStore()
 	secret := "test-secret-key"
@@ -69,13 +69,13 @@ func TestRefreshTokenGetError(t *testing.T) {
 		t.Fatalf("Failed to sign in: %v", err)
 	}
 
-	// Set the store to fail on GetRefreshToken
-	store.shouldFailGetRefreshToken = true
+	// Set the store to fail on ValidateRefreshToken
+	store.shouldFailValidateRefreshToken = true
 
 	// Try to refresh the token, which should fail
 	_, _, _, err = authenticator.RefreshToken(ctx, refreshToken)
 	if err == nil {
-		t.Errorf("Expected error when GetRefreshToken fails, got nil")
+		t.Errorf("Expected error when ValidateRefreshToken fails, got nil")
 	}
 }
 
